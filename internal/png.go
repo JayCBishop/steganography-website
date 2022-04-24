@@ -46,10 +46,10 @@ func (mc *MetaChunk) EncodeImage(b *bytes.Reader, data string) {
 	WriteData(b, bmb)
 }
 
-func (mc *MetaChunk) DecodeImage(b *bytes.Reader) {
+func (mc *MetaChunk) DecodeImage(b *bytes.Reader) (data []byte) {
 	mc.validate(b)
 	var m MetaChunk
-	offset, _ := strconv.ParseInt(offset, 10, 64)
+	offset, _ := strconv.ParseInt(offset, 0, 64)
 	b.Seek(offset, 0)
 	m.readChunk(b)
 	origData := m.Chk.Data
@@ -57,6 +57,8 @@ func (mc *MetaChunk) DecodeImage(b *bytes.Reader) {
 	m.Chk.CRC = m.createChunkCRC()
 	fmt.Printf("Payload Original: % X\n", origData)
 	fmt.Printf("Payload Decode: % X\n", m.Chk.Data)
+
+	return m.Chk.Data
 }
 
 func (mc *MetaChunk) marshalData() *bytes.Buffer {

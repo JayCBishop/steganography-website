@@ -13,7 +13,7 @@ const fileName string = "modified.png"
 
 //WriteData writes new data to offset
 func WriteData(r *bytes.Reader, b []byte) {
-	offset, err := strconv.ParseInt(offset, 10, 64)
+	offset, err := strconv.ParseInt(offset, 0, 64)
 	if err != nil {
 		log.Fatal(err)
 	}

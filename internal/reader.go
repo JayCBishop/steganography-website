@@ -4,17 +4,11 @@ import (
 	"bufio"
 	"bytes"
 	"log"
-	"os"
+	"mime/multipart"
 )
 
 //PreProcessImage reads to buffer from file handle
-func PreProcessImage(dat *os.File) (*bytes.Reader, error) {
-	stats, err := dat.Stat()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	var size = stats.Size()
+func PreProcessImage(dat multipart.File, size int64) *bytes.Reader {
 	b := make([]byte, size)
 
 	bufR := bufio.NewReader(dat)
@@ -24,5 +18,5 @@ func PreProcessImage(dat *os.File) (*bytes.Reader, error) {
 
 	bReader := bytes.NewReader(b)
 
-	return bReader, err
+	return bReader
 }
