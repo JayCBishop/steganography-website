@@ -3,18 +3,10 @@ package internal
 import (
 	"bytes"
 	"encoding/binary"
-	"encoding/hex"
 	"fmt"
 	"hash/crc32"
 	"log"
 	"strconv"
-	"strings"
-
-	"github.com/JayCBishop/steganography-website/models"
-)
-
-const (
-	endChunkType = "IEND"
 )
 
 //Header holds the first byte (aka magic byte)
@@ -36,68 +28,35 @@ type MetaChunk struct {
 	Offset int64
 }
 
-//ProcessImage is the wrapper to parse PNG bytes
-func (mc *MetaChunk) ProcessImage(b *bytes.Reader, c *models.CmdLineOpts) {
+const key string = "stegasaurs"
+const offset string = "0x85258"
+const chunkType string = "rNDm"
+
+func (mc *MetaChunk) EncodeImage(b *bytes.Reader, data string) {
 	mc.validate(b)
-	if (c.Offset != "") && (!c.Encode && !c.Decode) {
-		var m MetaChunk
-		m.Chk.Data = []byte(c.Payload)
-		m.Chk.Type = m.strToInt(c.Type)
-		m.Chk.Size = m.createChunkSize()
-		m.Chk.CRC = m.createChunkCRC()
-		bm := m.marshalData()
-		bmb := bm.Bytes()
-		fmt.Printf("Payload Original: % X\n", []byte(c.Payload))
-		fmt.Printf("Payload: % X\n", m.Chk.Data)
-		WriteData(b, c, bmb)
-	}
-	if (c.Offset != "") && c.Encode {
-		var m MetaChunk
-		m.Chk.Data = XorEncode([]byte(c.Payload), c.Key)
-		m.Chk.Type = m.strToInt(c.Type)
-		m.Chk.Size = m.createChunkSize()
-		m.Chk.CRC = m.createChunkCRC()
-		bm := m.marshalData()
-		bmb := bm.Bytes()
-		fmt.Printf("Payload Original: % X\n", []byte(c.Payload))
-		fmt.Printf("Payload Encode: % X\n", m.Chk.Data)
-		WriteData(b, c, bmb)
-	}
-	if (c.Offset != "") && c.Decode {
-		var m MetaChunk
-		offset, _ := strconv.ParseInt(c.Offset, 10, 64)
-		b.Seek(offset, 0)
-		m.readChunk(b)
-		origData := m.Chk.Data
-		m.Chk.Data = XorDecode(m.Chk.Data, c.Key)
-		m.Chk.CRC = m.createChunkCRC()
-		bm := m.marshalData()
-		bmb := bm.Bytes()
-		fmt.Printf("Payload Original: % X\n", origData)
-		fmt.Printf("Payload Decode: % X\n", m.Chk.Data)
-		WriteData(b, c, bmb)
-	}
-	if c.Meta {
-		count := 1 //Start at 1 because 0 is reserved for magic byte
-		var chunkType string
-		for chunkType != endChunkType {
-			mc.getOffset(b)
-			mc.readChunk(b)
-			fmt.Println("---- Chunk # " + strconv.Itoa(count) + " ----")
-			fmt.Printf("Chunk Offset: %#02x\n", mc.Offset)
-			fmt.Printf("Chunk Length: %s bytes\n", strconv.Itoa(int(mc.Chk.Size)))
-			fmt.Printf("Chunk Type: %s\n", mc.chunkTypeToString())
-			fmt.Printf("Chunk Importance: %s\n", mc.checkCritType())
-			if !c.Suppress {
-				fmt.Printf("Chunk Data: %#x\n", mc.Chk.Data)
-			} else if c.Suppress {
-				fmt.Printf("Chunk Data: %s\n", "Suppressed")
-			}
-			fmt.Printf("Chunk CRC: %x\n", mc.Chk.CRC)
-			chunkType = mc.chunkTypeToString()
-			count++
-		}
-	}
+	var m MetaChunk
+	m.Chk.Data = XorEncode([]byte(data), key)
+	m.Chk.Type = m.strToInt(chunkType)
+	m.Chk.Size = m.createChunkSize()
+	m.Chk.CRC = m.createChunkCRC()
+	bm := m.marshalData()
+	bmb := bm.Bytes()
+	fmt.Printf("Payload Original: % X\n", []byte(data))
+	fmt.Printf("Payload Encode: % X\n", m.Chk.Data)
+	WriteData(b, bmb)
+}
+
+func (mc *MetaChunk) DecodeImage(b *bytes.Reader) {
+	mc.validate(b)
+	var m MetaChunk
+	offset, _ := strconv.ParseInt(offset, 10, 64)
+	b.Seek(offset, 0)
+	m.readChunk(b)
+	origData := m.Chk.Data
+	m.Chk.Data = XorDecode(m.Chk.Data, key)
+	m.Chk.CRC = m.createChunkCRC()
+	fmt.Printf("Payload Original: % X\n", origData)
+	fmt.Printf("Payload Decode: % X\n", m.Chk.Data)
 }
 
 func (mc *MetaChunk) marshalData() *bytes.Buffer {
@@ -148,26 +107,6 @@ func (mc *MetaChunk) readChunkCRC(b *bytes.Reader) {
 	if err := binary.Read(b, binary.BigEndian, &mc.Chk.CRC); err != nil {
 		log.Fatal(err)
 	}
-}
-
-func (mc *MetaChunk) getOffset(b *bytes.Reader) {
-	offset, _ := b.Seek(0, 1)
-	mc.Offset = offset
-}
-
-func (mc *MetaChunk) chunkTypeToString() string {
-	h := fmt.Sprintf("%x", mc.Chk.Type)
-	decoded, _ := hex.DecodeString(h)
-	result := string(decoded)
-	return result
-}
-
-func (mc *MetaChunk) checkCritType() string {
-	fChar := string([]rune(mc.chunkTypeToString())[0])
-	if fChar == strings.ToUpper(fChar) {
-		return "Critical"
-	}
-	return "Ancillary"
 }
 
 func (mc *MetaChunk) validate(b *bytes.Reader) {
