@@ -39,7 +39,7 @@ type MetaChunk struct {
 //ProcessImage is the wrapper to parse PNG bytes
 func (mc *MetaChunk) ProcessImage(b *bytes.Reader, c *models.CmdLineOpts) {
 	mc.validate(b)
-	if (c.Offset != "") && (c.Encode == false && c.Decode == false) {
+	if (c.Offset != "") && (!c.Encode && !c.Decode) {
 		var m MetaChunk
 		m.Chk.Data = []byte(c.Payload)
 		m.Chk.Type = m.strToInt(c.Type)
@@ -88,7 +88,7 @@ func (mc *MetaChunk) ProcessImage(b *bytes.Reader, c *models.CmdLineOpts) {
 			fmt.Printf("Chunk Length: %s bytes\n", strconv.Itoa(int(mc.Chk.Size)))
 			fmt.Printf("Chunk Type: %s\n", mc.chunkTypeToString())
 			fmt.Printf("Chunk Importance: %s\n", mc.checkCritType())
-			if c.Suppress == false {
+			if !c.Suppress {
 				fmt.Printf("Chunk Data: %#x\n", mc.Chk.Data)
 			} else if c.Suppress {
 				fmt.Printf("Chunk Data: %s\n", "Suppressed")
@@ -158,7 +158,7 @@ func (mc *MetaChunk) getOffset(b *bytes.Reader) {
 func (mc *MetaChunk) chunkTypeToString() string {
 	h := fmt.Sprintf("%x", mc.Chk.Type)
 	decoded, _ := hex.DecodeString(h)
-	result := fmt.Sprintf("%s", decoded)
+	result := string(decoded)
 	return result
 }
 

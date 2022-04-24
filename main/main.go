@@ -44,7 +44,7 @@ func init() {
 		byteOffset, _ := strconv.ParseInt(opts.Offset, 0, 64)
 		opts.Offset = strconv.FormatInt(byteOffset, 10)
 	}
-	if opts.Suppress && (opts.Meta == false) {
+	if opts.Suppress && (!opts.Meta) {
 		log.Fatal("Fatal: The --meta flag is required when using --suppress")
 	}
 	if opts.Meta && (opts.Offset != "") {
@@ -74,7 +74,7 @@ func usage() {
 }
 
 func main() {
-	dat, err := os.Open(opts.Input)
+	dat, _ := os.Open(opts.Input)
 	defer dat.Close()
 	bReader, err := internal.PreProcessImage(dat)
 	if err != nil {
