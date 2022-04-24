@@ -2,11 +2,9 @@ package main
 
 import (
 	"fmt"
-	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
-	"os"
 
 	"github.com/JayCBishop/steganography-website/internal"
 	"github.com/gorilla/mux"
@@ -17,15 +15,6 @@ var (
 	flags = pflag.FlagSet{SortFlags: false}
 	png   internal.MetaChunk
 )
-
-func usage() {
-	fmt.Fprintf(os.Stderr, "Example Usage: %s -i in.png -o out.png --inject --offset 0x85258 --payload 1234\n", os.Args[0])
-	fmt.Fprintf(os.Stderr, "Example Encode Usage: %s -i in.png -o encode.png --inject --offset 0x85258 --payload 1234 --encode --key secret\n", os.Args[0])
-	fmt.Fprintf(os.Stderr, "Example Decode Usage: %s -i encode.png -o decode.png --offset 0x85258 --decode --key secret\n", os.Args[0])
-	fmt.Fprintf(os.Stderr, "Flags: %s {OPTION]...\n", os.Args[0])
-	flags.PrintDefaults()
-	os.Exit(0)
-}
 
 func main() {
 	router := mux.NewRouter()
@@ -57,24 +46,19 @@ func encodeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer file.Close()
+
 	fmt.Fprintf(w, "%v", handler.Header)
-	f, err := os.OpenFile("./test/"+handler.Filename, os.O_WRONLY|os.O_CREATE, 0666)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
 
-	defer f.Close()
-
-	bReader, err := internal.PreProcessImage(f)
-	if err != nil {
-		log.Fatal(err)
-	}
-
+	bReader := internal.PreProcessImage(file, handler.Size)
 	data := r.FormValue("data")
 
 	png.EncodeImage(bReader, data)
-	io.Copy(f, file)
+
+	fileBytes, _ := ioutil.ReadFile("modified.png")
+
+	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "application/octet-stream")
+	w.Write(fileBytes)
 }
 
 func decodeHandler(w http.ResponseWriter, r *http.Request) {
@@ -86,18 +70,14 @@ func decodeHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer file.Close()
 	fmt.Fprintf(w, "%v", handler.Header)
-	f, err := os.OpenFile("./test/"+handler.Filename, os.O_WRONLY|os.O_CREATE, 0666)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
 
-	defer f.Close()
-
-	bReader, err := internal.PreProcessImage(f)
+	bReader := internal.PreProcessImage(file, handler.Size)
 	if err != nil {
 		log.Fatal(err)
 	}
-	png.DecodeImage(bReader)
-	io.Copy(f, file)
+	data := png.DecodeImage(bReader)
+
+	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "text/plain")
+	w.Write(data)
 }
