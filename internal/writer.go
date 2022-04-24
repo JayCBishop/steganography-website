@@ -1,4 +1,4 @@
-package utils
+package internal
 
 import (
 	"bytes"
@@ -8,7 +8,7 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/blackhat-go/bhg/ch-13/imgInject/models"
+	"github.com/JayCBishop/steganography-website/models"
 )
 
 //WriteData writes new data to offset

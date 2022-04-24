@@ -10,8 +10,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/blackhat-go/bhg/ch-13/imgInject/models"
-	"github.com/blackhat-go/bhg/ch-13/imgInject/utils"
+	"github.com/JayCBishop/steganography-website/models"
 )
 
 const (
@@ -50,11 +49,11 @@ func (mc *MetaChunk) ProcessImage(b *bytes.Reader, c *models.CmdLineOpts) {
 		bmb := bm.Bytes()
 		fmt.Printf("Payload Original: % X\n", []byte(c.Payload))
 		fmt.Printf("Payload: % X\n", m.Chk.Data)
-		utils.WriteData(b, c, bmb)
+		WriteData(b, c, bmb)
 	}
 	if (c.Offset != "") && c.Encode {
 		var m MetaChunk
-		m.Chk.Data = utils.XorEncode([]byte(c.Payload), c.Key)
+		m.Chk.Data = XorEncode([]byte(c.Payload), c.Key)
 		m.Chk.Type = m.strToInt(c.Type)
 		m.Chk.Size = m.createChunkSize()
 		m.Chk.CRC = m.createChunkCRC()
@@ -62,7 +61,7 @@ func (mc *MetaChunk) ProcessImage(b *bytes.Reader, c *models.CmdLineOpts) {
 		bmb := bm.Bytes()
 		fmt.Printf("Payload Original: % X\n", []byte(c.Payload))
 		fmt.Printf("Payload Encode: % X\n", m.Chk.Data)
-		utils.WriteData(b, c, bmb)
+		WriteData(b, c, bmb)
 	}
 	if (c.Offset != "") && c.Decode {
 		var m MetaChunk
@@ -70,13 +69,13 @@ func (mc *MetaChunk) ProcessImage(b *bytes.Reader, c *models.CmdLineOpts) {
 		b.Seek(offset, 0)
 		m.readChunk(b)
 		origData := m.Chk.Data
-		m.Chk.Data = utils.XorDecode(m.Chk.Data, c.Key)
+		m.Chk.Data = XorDecode(m.Chk.Data, c.Key)
 		m.Chk.CRC = m.createChunkCRC()
 		bm := m.marshalData()
 		bmb := bm.Bytes()
 		fmt.Printf("Payload Original: % X\n", origData)
 		fmt.Printf("Payload Decode: % X\n", m.Chk.Data)
-		utils.WriteData(b, c, bmb)
+		WriteData(b, c, bmb)
 	}
 	if c.Meta {
 		count := 1 //Start at 1 because 0 is reserved for magic byte

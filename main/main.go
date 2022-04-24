@@ -6,16 +6,15 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/blackhat-go/bhg/ch-13/imgInject/models"
-	"github.com/blackhat-go/bhg/ch-13/imgInject/pnglib"
-	"github.com/blackhat-go/bhg/ch-13/imgInject/utils"
+	"github.com/JayCBishop/steganography-website/internal"
+	"github.com/JayCBishop/steganography-website/models"
 	"github.com/spf13/pflag"
 )
 
 var (
 	flags = pflag.FlagSet{SortFlags: false}
 	opts  models.CmdLineOpts
-	png   pnglib.MetaChunk
+	png   internal.MetaChunk
 )
 
 func init() {
@@ -77,7 +76,7 @@ func usage() {
 func main() {
 	dat, err := os.Open(opts.Input)
 	defer dat.Close()
-	bReader, err := utils.PreProcessImage(dat)
+	bReader, err := internal.PreProcessImage(dat)
 	if err != nil {
 		log.Fatal(err)
 	}
