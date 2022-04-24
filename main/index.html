@@ -20,11 +20,11 @@
                 var formData = new FormData(form);
                 var req = new XMLHttpRequest();
                 req.open("POST", "/api/encode", true);
-                req.onload(function (e) {
-                    if (req.status == 200) {
-                        console.log("Encode response success!")
-                    }
-                });
+                // req.onload(function (e) {
+                //     if (req.status == 200) {
+                //         console.log("Encode response success!")
+                //     }
+                // });
                 req.send(formData);
                 console.log("enc Button pressed!")
             });
