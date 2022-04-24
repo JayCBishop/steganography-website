@@ -85,6 +85,8 @@ func main() {
 
 	router := mux.NewRouter()
 	router.HandleFunc("/", mainHandler)
+	router.HandleFunc("/api/encode", encodeHandler)
+	router.HandleFunc("/api/decode", decodeHandler)
 	http.Handle("/", router)
 
 	//start and listen to requests
@@ -100,4 +102,12 @@ func mainHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "application/octet-stream")
 	w.Write(fileBytes)
+}
+
+func encodeHandler(w http.ResponseWriter, r *http.Request) {
+
+}
+
+func decodeHandler(w http.ResponseWriter, r *http.Request) {
+
 }
