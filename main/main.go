@@ -47,8 +47,6 @@ func encodeHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer file.Close()
 
-	fmt.Fprintf(w, "%v", handler.Header)
-
 	bReader := internal.PreProcessImage(file, handler.Size)
 	data := r.FormValue("data")
 
@@ -69,7 +67,6 @@ func decodeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer file.Close()
-	fmt.Fprintf(w, "%v", handler.Header)
 
 	bReader := internal.PreProcessImage(file, handler.Size)
 	if err != nil {
