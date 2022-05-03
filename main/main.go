@@ -50,7 +50,14 @@ func encodeHandler(w http.ResponseWriter, r *http.Request) {
 	bReader := internal.PreProcessImage(file, handler.Size)
 	data := r.FormValue("data")
 
-	png.EncodeImage(bReader, data)
+	encodeErr := png.EncodeImage(bReader, data)
+
+	if encodeErr != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Header().Set("Content-Type", "text/plain")
+		w.Write([]byte(encodeErr.Error()))
+		return
+	}
 
 	fileBytes, _ := ioutil.ReadFile("modified.png")
 
@@ -72,7 +79,7 @@ func decodeHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	data := png.DecodeImage(bReader)
+	data, _ := png.DecodeImage(bReader)
 
 	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "text/plain")
