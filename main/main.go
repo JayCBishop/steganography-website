@@ -50,12 +50,12 @@ func encodeHandler(w http.ResponseWriter, r *http.Request) {
 	bReader := internal.PreProcessImage(file, handler.Size)
 	data := r.FormValue("data")
 
-	encodeErr := png.EncodeImage(bReader, data)
+	encErr := png.EncodeImage(bReader, data)
 
-	if encodeErr != nil {
+	if encErr != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Header().Set("Content-Type", "text/plain")
-		w.Write([]byte(encodeErr.Error()))
+		w.Write([]byte(encErr.Error()))
 		return
 	}
 
@@ -79,9 +79,15 @@ func decodeHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	data, _ := png.DecodeImage(bReader)
+	data, decErr := png.DecodeImage(bReader)
+	w.Header().Set("Content-Type", "text/plain")
+
+	if decErr != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(decErr.Error()))
+		return
+	}
 
 	w.WriteHeader(http.StatusOK)
-	w.Header().Set("Content-Type", "text/plain")
 	w.Write(data)
 }
