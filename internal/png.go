@@ -3,6 +3,7 @@ package internal
 import (
 	"bytes"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"hash/crc32"
 	"log"
@@ -32,8 +33,13 @@ const key string = "stegasaurs"
 const offset string = "0x85258"
 const chunkType string = "rNDm"
 
-func (mc *MetaChunk) EncodeImage(b *bytes.Reader, data string) {
-	mc.validate(b)
+func (mc *MetaChunk) EncodeImage(b *bytes.Reader, data string) error {
+	err := mc.validate(b)
+
+	if err != nil {
+		return err
+	}
+
 	var m MetaChunk
 	m.Chk.Data = XorEncode([]byte(data), key)
 	m.Chk.Type = m.strToInt(chunkType)
@@ -44,10 +50,17 @@ func (mc *MetaChunk) EncodeImage(b *bytes.Reader, data string) {
 	fmt.Printf("Payload Original: % X\n", []byte(data))
 	fmt.Printf("Payload Encode: % X\n", m.Chk.Data)
 	WriteData(b, bmb)
+
+	return nil
 }
 
-func (mc *MetaChunk) DecodeImage(b *bytes.Reader) (data []byte) {
-	mc.validate(b)
+func (mc *MetaChunk) DecodeImage(b *bytes.Reader) ([]byte, error) {
+	err := mc.validate(b)
+
+	if err != nil {
+		return nil, err
+	}
+
 	var m MetaChunk
 	offset, _ := strconv.ParseInt(offset, 0, 64)
 	b.Seek(offset, 0)
@@ -58,7 +71,7 @@ func (mc *MetaChunk) DecodeImage(b *bytes.Reader) (data []byte) {
 	fmt.Printf("Payload Original: % X\n", origData)
 	fmt.Printf("Payload Decode: % X\n", m.Chk.Data)
 
-	return m.Chk.Data
+	return m.Chk.Data, nil
 }
 
 func (mc *MetaChunk) marshalData() *bytes.Buffer {
@@ -111,7 +124,7 @@ func (mc *MetaChunk) readChunkCRC(b *bytes.Reader) {
 	}
 }
 
-func (mc *MetaChunk) validate(b *bytes.Reader) {
+func (mc *MetaChunk) validate(b *bytes.Reader) error {
 	var header Header
 
 	if err := binary.Read(b, binary.BigEndian, &header.Header); err != nil {
@@ -122,9 +135,12 @@ func (mc *MetaChunk) validate(b *bytes.Reader) {
 	binary.BigEndian.PutUint64(bArr, header.Header)
 
 	if string(bArr[1:4]) != "PNG" {
-		log.Fatal("Provided file is not a valid PNG format")
+		errMsg := "provided file is not a valid PNG format"
+		fmt.Println(errMsg)
+		return errors.New(errMsg)
 	} else {
 		fmt.Println("Valid PNG so let us continue!")
+		return nil
 	}
 }
 
