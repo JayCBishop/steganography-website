@@ -21,6 +21,7 @@
         document.addEventListener("DOMContentLoaded", function() {
             document.querySelector("#encBtn").addEventListener("click", function () {
                 document.querySelector("#decInfo").textContent = "";
+                document.querySelector("#errMsg").textContent = "";
                 var form = document.querySelector("#stegForm");
                 var formData = new FormData(form);
                 var req = new XMLHttpRequest();
@@ -46,6 +47,7 @@
             });
 
             document.querySelector("#decBtn").addEventListener("click", function () {
+                document.querySelector("#errMsg").textContent = "";
                 var form = document.querySelector("#stegForm");
                 var formData = new FormData(form);
                 var req = new XMLHttpRequest();
