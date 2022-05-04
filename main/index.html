@@ -14,11 +14,13 @@
                 <button id="decBtn" class="btn btn-secondary" type="button">Decode</button>
             </div>
             <div id="decInfo"></div>
+            <div id="errMsg" style="color: red;"></div>
         </form>
     </body>
     <script>
         document.addEventListener("DOMContentLoaded", function() {
             document.querySelector("#encBtn").addEventListener("click", function () {
+                document.querySelector("#decInfo").textContent = "";
                 var form = document.querySelector("#stegForm");
                 var formData = new FormData(form);
                 var req = new XMLHttpRequest();
@@ -33,6 +35,10 @@
                         a.href = window.URL.createObjectURL(blob);
                         a.download = "modified.png";
                         a.dispatchEvent(new MouseEvent("click"));
+                    } else if (req.status == 400) {
+                        form.reset();
+                        console.log("Encode Message Failure.");
+                        document.querySelector("#errMsg").textContent = "Error Encoding: Invalid File.";
                     }
                 });
                 req.send(formData);
@@ -49,6 +55,10 @@
                         form.reset();
                         console.log("Decode response success!");
                         document.querySelector("#decInfo").textContent = "Decoded message: " + req.response;
+                    } else if (req.status == 400) {
+                        form.reset();
+                        console.log("Decode Message Failure.");
+                        document.querySelector("#errMsg").textContent = "Error Decoding: Invalid File.";
                     }
                 });
                 req.send(formData);

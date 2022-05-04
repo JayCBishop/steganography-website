@@ -55,16 +55,18 @@ func (mc *MetaChunk) EncodeImage(b *bytes.Reader, data string) error {
 }
 
 func (mc *MetaChunk) DecodeImage(b *bytes.Reader) ([]byte, error) {
-	err := mc.validate(b)
-
-	if err != nil {
+	if err := mc.validate(b); err != nil {
 		return nil, err
 	}
 
 	var m MetaChunk
 	offset, _ := strconv.ParseInt(offset, 0, 64)
 	b.Seek(offset, 0)
-	m.readChunk(b)
+
+	if err := m.readChunk(b); err != nil {
+		return nil, err
+	}
+
 	origData := m.Chk.Data
 	m.Chk.Data = XorDecode(m.Chk.Data, key)
 	m.Chk.CRC = m.createChunkCRC()
@@ -92,36 +94,53 @@ func (mc *MetaChunk) marshalData() *bytes.Buffer {
 	return bytesMSB
 }
 
-func (mc *MetaChunk) readChunk(b *bytes.Reader) {
-	mc.readChunkSize(b)
-	mc.readChunkType(b)
-	mc.readChunkBytes(b, mc.Chk.Size)
-	mc.readChunkCRC(b)
+func (mc *MetaChunk) readChunk(b *bytes.Reader) error {
+	if err := mc.readChunkSize(b); err != nil {
+		return err
+	}
+
+	if err := mc.readChunkType(b); err != nil {
+		return err
+	}
+
+	if err := mc.readChunkBytes(b, mc.Chk.Size); err != nil {
+		return err
+	}
+
+	if err := mc.readChunkCRC(b); err != nil {
+		return err
+	}
+
+	return nil
 }
 
-func (mc *MetaChunk) readChunkSize(b *bytes.Reader) {
+func (mc *MetaChunk) readChunkSize(b *bytes.Reader) error {
 	if err := binary.Read(b, binary.BigEndian, &mc.Chk.Size); err != nil {
-		log.Fatal(err)
+		return err
 	}
+	return nil
 }
 
-func (mc *MetaChunk) readChunkType(b *bytes.Reader) {
+func (mc *MetaChunk) readChunkType(b *bytes.Reader) error {
 	if err := binary.Read(b, binary.BigEndian, &mc.Chk.Type); err != nil {
-		log.Fatal(err)
+		return err
 	}
+	return nil
 }
 
-func (mc *MetaChunk) readChunkBytes(b *bytes.Reader, cLen uint32) {
+func (mc *MetaChunk) readChunkBytes(b *bytes.Reader, cLen uint32) error {
 	mc.Chk.Data = make([]byte, cLen)
 	if err := binary.Read(b, binary.BigEndian, &mc.Chk.Data); err != nil {
-		log.Fatal(err)
+		return err
 	}
+	return nil
 }
 
-func (mc *MetaChunk) readChunkCRC(b *bytes.Reader) {
+func (mc *MetaChunk) readChunkCRC(b *bytes.Reader) error {
 	if err := binary.Read(b, binary.BigEndian, &mc.Chk.CRC); err != nil {
-		log.Fatal(err)
+		return err
 	}
+	return nil
 }
 
 func (mc *MetaChunk) validate(b *bytes.Reader) error {
